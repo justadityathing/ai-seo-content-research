@@ -1,1 +1,43 @@
+# Data & secrets
+/data/raw/
+.env
+.env.local
+APIFY_TOKEN
+secrets.json
 
+# IDE & editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Node (if using any JS tools)
+node_modules/
+package-lock.json
+.npm
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Temporary files
+.tmp/
+.cache/
