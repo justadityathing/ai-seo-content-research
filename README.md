@@ -1,1 +1,1 @@
-# -ai-seo-content-research
+# ai-seo-content-research
