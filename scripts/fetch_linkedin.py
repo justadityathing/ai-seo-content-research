@@ -1,139 +1,160 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Fetch LinkedIn posts for AI-SEO content research using Apify.
-Usage: python scripts/fetch_linkedin.py
-Requires: pip install apify-client
-Set environment variable: export APIFY_TOKEN=your_token_here
-Reads scripts/profiles.csv with columns: author,linkedin_url
-Saves posts to research/linkedin-posts/{author}.md
+Usage: APIFY_TOKEN=xxx python scripts/fetch_linkedin.py
+Reads scripts/profiles-linkedin.csv
+Saves to research/linkedin-posts/{author-slug}.md
+Commits + pushes after each author.
 """
-
-import os
-import csv
-import time
+import os, csv, re, subprocess, sys
+# Force UTF-8 stdout on Windows
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout.reconfigure(encoding='utf-8')
 from pathlib import Path
 from datetime import datetime
 from apify_client import ApifyClient
 
-# Config
-APIFY_TOKEN = os.environ.get('APIFY_TOKEN')
-CSV_FILE = "scripts/profiles.csv"
-OUTPUT_DIR = "research/linkedin-posts"
-ACTOR_ID = "harvestapi/linkedin-profile-posts"
+APIFY_TOKEN = os.environ.get('APIFY_TOKEN', '')
+BASE_DIR = Path(__file__).resolve().parent.parent
+CSV_FILE = BASE_DIR / 'scripts' / 'profiles-linkedin.csv'
+OUT_DIR = BASE_DIR / 'research' / 'linkedin-posts'
+ACTOR_ID = 'harvestapi/linkedin-profile-posts'
+MAX_TEXT = 1500
 
-def get_linkedin_profile_url(input_url):
-    """Normalize LinkedIn URL to profile URL."""
-    url = input_url.strip()
-    if not url.startswith('http'):
-        url = f"https://www.linkedin.com/in/{url}/"
-    if not url.endswith('/'):
-        url += '/'
-    return url
 
-def fetch_linkedin_posts(profile_url):
-    """Fetch posts from LinkedIn profile using Apify actor."""
-    if not APIFY_TOKEN:
-        print("  ✗ APIFY_TOKEN not set. Run: export APIFY_TOKEN=your_token")
-        return []
-    
-    client = ApifyClient(APIFY_TOKEN)
-    
-    input_data = {
-        "profileUrls": [profile_url],
-        "maxPostsPerProfile": 15,
-        "scrapeReactions": True,
-        "scrapeComments": False,
-    }
-    
-    try:
-        print(f"  → Calling Apify actor {ACTOR_ID}...")
-        run = client.actor(ACTOR_ID).call(run_input=input_data)
-        
-        dataset_id = run.get('datasetId')
-        if not dataset_id:
-            print(f"  ✗ No dataset returned from actor")
-            return []
-        
-        items = client.dataset(dataset_id).list_items().items
-        print(f"  ✓ Fetched {len(items)} posts from {profile_url}")
-        return items
-    except Exception as e:
-        print(f"  ✗ Apify error: {str(e)}")
-        return []
+def slugify(name):
+    s = name.lower()
+    s = re.sub(r'[^a-z0-9]+', '-', s)
+    return s.strip('-')
 
-def save_linkedin_posts(author, posts):
-    """Save posts to organized file."""
-    author_slug = author.lower().replace(' ', '-').replace('ç', 'c')
-    output_file = Path(OUTPUT_DIR) / f"{author_slug}.md"
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-    
-    content = f"# LinkedIn Posts: {author}\n\n"
-    content += f"**Collection date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-    content += f"**Total posts collected:** {len(posts)}\n\n"
-    content += "---\n\n"
-    
-    # Sort by date descending (newest first)
-    sorted_posts = sorted(posts, 
-                         key=lambda x: x.get('postedAt', '1900-01-01'), 
-                         reverse=True)
-    
-    for i, post in enumerate(sorted_posts, 1):
-        date = post.get('postedAt', 'unknown date')[:10]  # YYYY-MM-DD
-        text = post.get('content', '(no text)').strip()
-        likes = post.get('likeCount', 0)
-        comments = post.get('commentCount', 0)
-        url = post.get('postUrl', '')
-        
-        # Truncate long posts
-        if len(text) > 500:
-            text = text[:500] + "...[truncated]"
-        
-        content += f"## Post #{i}\n\n"
-        content += f"**Date:** {date}\n"
-        content += f"**Reactions:** {likes} | **Comments:** {comments}\n"
-        if url:
-            content += f"**URL:** {url}\n"
-        content += f"\n{text}\n\n"
-        content += "---\n\n"
-    
-    with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(content)
-    print(f"  ✓ Saved: {output_file}")
+
+def extract_text(post):
+    for field in ('content', 'text', 'postText', 'description'):
+        v = post.get(field)
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+    ca = post.get('contentAttributes') or {}
+    for sub in ('text', 'content'):
+        v = ca.get(sub) if isinstance(ca, dict) else None
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+    return '*(no text)*'
+
+
+def extract_engagement(post):
+    eng = post.get('engagement') or {}
+    reactions = eng.get('numLikes') or eng.get('reactions') or post.get('reactions') or 0
+    comments = eng.get('numComments') or eng.get('comments') or post.get('comments') or 0
+    if isinstance(reactions, list):
+        reactions = len(reactions)
+    if isinstance(comments, list):
+        comments = len(comments)
+    return int(reactions or 0), int(comments or 0)
+
+
+def extract_date(post):
+    for f in ('postedAt', 'date', 'publishedAt', 'createdAt'):
+        v = post.get(f)
+        if v:
+            return str(v)[:10]
+    return 'unknown'
+
+
+def extract_url(post):
+    for f in ('linkedinUrl', 'shareLinkedinUrl', 'url', 'postUrl'):
+        v = post.get(f)
+        if v:
+            return v
+    return ''
+
+
+def build_markdown(name, posts, collection_date):
+    lines = [
+        f'# LinkedIn Posts: {name}',
+        f'**Collection date:** {collection_date}',
+        f'**Total posts:** {len(posts)}',
+        '', '---', '',
+    ]
+    for i, post in enumerate(posts, 1):
+        text = extract_text(post)
+        reactions, comments = extract_engagement(post)
+        date = extract_date(post)
+        url = extract_url(post)
+        if len(text) > MAX_TEXT:
+            text = text[:MAX_TEXT] + '... *(truncated)*'
+        lines += [
+            f'## Post #{i}',
+            f'**Date:** {date}  ',
+            f'**Reactions:** {reactions} | **Comments:** {comments}  ',
+            f'**URL:** {url}',
+            '',
+            text,
+            '', '---', '',
+        ]
+    return '\n'.join(lines)
+
+
+def git_commit_push(name, count):
+    subprocess.run(['git', 'add', 'research/linkedin-posts/'], cwd=BASE_DIR, check=True)
+    msg = f'data: {name} — {count} linkedin posts'
+    subprocess.run(['git', 'commit', '-m', msg], cwd=BASE_DIR, check=True)
+    subprocess.run(['git', 'push'], cwd=BASE_DIR, check=True)
+    print(f'  Committed & pushed: {msg}')
+
 
 def main():
-    if not os.path.exists(CSV_FILE):
-        print(f"Error: {CSV_FILE} not found.")
-        print("Create it with columns: author,linkedin_url")
-        print("Example:")
-        print("  author,linkedin_url")
-        print("  Ryan Law,https://www.linkedin.com/in/ryanlaw/")
+    if not APIFY_TOKEN:
+        print('ERROR: Set APIFY_TOKEN env var')
         return
-    
-    with open(CSV_FILE, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        rows = list(reader)
-    
-    print(f"Found {len(rows)} profiles in {CSV_FILE}\n")
-    
+
+    client = ApifyClient(APIFY_TOKEN)
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    collection_date = datetime.now().strftime('%Y-%m-%d')
+    failures = []
+
+    with open(CSV_FILE, encoding='utf-8') as f:
+        rows = list(csv.DictReader(f))
+
+    print(f'Processing {len(rows)} profiles...\n')
+
     for i, row in enumerate(rows):
-        author = row.get('author', '').strip()
-        linkedin_url = row.get('linkedin_url', '').strip()
-        
-        if not linkedin_url:
-            print(f"  ✗ Row {i+2}: No linkedin_url, skipping")
-            continue
-        
-        profile_url = get_linkedin_profile_url(linkedin_url)
-        print(f"[{i+1}/{len(rows)}] {author}")
-        
-        posts = fetch_linkedin_posts(profile_url)
-        if posts:
-            save_linkedin_posts(author, posts)
-        
-        if i < len(rows) - 1:
-            time.sleep(2)  # Rate limit between requests
-    
-    print(f"\n✓ Complete. Posts saved to {OUTPUT_DIR}/")
+        name = row.get('author', '').strip()
+        url = row.get('linkedin_url', '').strip()
+        slug = slugify(name)
+        print(f'[{i+1}/{len(rows)}] {name}')
+
+        try:
+            run = client.actor(ACTOR_ID).call(run_input={
+                'targetUrls': [url],
+                'maxPosts': 15,
+                'scrapeReactions': True,
+            })
+            posts = list(client.dataset(run.default_dataset_id).iterate_items())
+            print(f'  Posts fetched: {len(posts)}')
+
+            if not posts:
+                print(f'  SKIP: 0 posts (profile may be private or inactive)')
+                failures.append((name, '0 posts returned'))
+                continue
+
+            posts.sort(key=lambda p: str(p.get('postedAt', '')), reverse=True)
+            md = build_markdown(name, posts, collection_date)
+            out_path = OUT_DIR / f'{slug}.md'
+            out_path.write_text(md, encoding='utf-8')
+            print(f'  Saved: {out_path}')
+            git_commit_push(name, len(posts))
+
+        except Exception as e:
+            print(f'  FAIL: {e}')
+            failures.append((name, str(e)[:120]))
+
+    print('\n=== DONE ===')
+    if failures:
+        print(f'Failures ({len(failures)}):')
+        for name, reason in failures:
+            print(f'  - {name}: {reason}')
+
 
 if __name__ == '__main__':
     main()
