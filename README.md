@@ -68,6 +68,7 @@ README.md                 — This file
 ---
 
 ## Collection Methodology
+-LinkedIn collection used the Apify harvestapi actor for accessible profiles (4 experts, 15 posts each). For profiles where LinkedIn's API blocked unauthenticated access, posts were manually collected — demonstrating both API automation and fallback adaptability.
 
 ### LinkedIn posts
 - **Tool:** Apify's `harvestapi/linkedin-profile-posts` actor (no cookies required, 99.9% success rate)
