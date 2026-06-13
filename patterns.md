@@ -1,5 +1,4 @@
 # Cross-Expert Patterns & Synthesis
-
 **Date:** June 2026
 **Based on:** 10 expert sources — YouTube transcripts, LinkedIn posts, articles
 
