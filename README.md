@@ -95,6 +95,21 @@ README.md                 — This file
 - [ ] Day 3: Synthesize patterns, write analysis, finalize README
 
 ---
+## Channel Selection Rationale
+
+Not every expert's highest-signal content lives on the same platform. A key part of this research was identifying *where* each expert actually does their substantive thinking, rather than treating all channels as equal or defaulting to whatever was easiest to scrape.
+
+Some observations that shaped collection:
+
+- **Lily Ray** — Her LinkedIn is primarily reposts with brief commentary, plus personal content (DJing, day-to-day AI use). Her substantive AI-SEO analysis lives in podcast interviews (e.g. the AirOps "Google in Flux" interview, collected here as a transcript) and her Amsive research posts. Collection was prioritized toward those channels.
+
+- **Eli Schwartz, Kevin Indig** — Their deepest work is in their newsletters (Product-Led SEO, Growth Memo) and long-form essays, not social posts. LinkedIn for them is a distribution teaser, not the source.
+
+- **Ryan Law, Glen Allsopp** — Their highest-signal output is published research on the Ahrefs blog and Detailed.com, captured in the sources list and reference articles rather than via social scraping.
+
+- **Koray Gübür, Matt Diggity, Mike King** — These experts genuinely teach their methods in video form (tutorials, conference talks, experiments), which is why YouTube transcripts carry the most weight for them.
+
+**Takeaway:** For a playbook on AI-SEO content production, the signal is unevenly distributed across channels. This research weights each source by *where that expert actually demonstrates practice* — transcripts for the teachers, articles for the researchers, posts only where the posts themselves carry original insight. This is also why LinkedIn coverage is intentionally partial: where an expert's LinkedIn was low-signal (reposts, personal content) or access-restricted, collection effort was redirected to their higher-value channels rather than padding the dataset.
 
 **Last updated:** June 2026
 **Author:** [justadityathing](https://github.com/justadityathing)
