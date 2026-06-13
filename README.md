@@ -87,6 +87,22 @@ README.md                 — This file
 
 ---
 
+## Collection Results
+
+**YouTube Transcripts:** 16 transcripts successfully collected across 9 experts via youtube-transcript-api. Files saved to research/youtube-transcripts/{author}/{date}--{title}.md. Total: 9 KB–123 KB per file.
+
+**LinkedIn Posts:** 60 posts successfully collected from 4 experts (Koray Gubur, Eli Schwartz, Cyrus Shepard, Mike King) via the Apify harvestapi/linkedin-profile-posts actor. 15 posts per expert. Files saved to research/linkedin-posts/{author}.md.
+
+**LinkedIn Access Limitations:** 6 expert profiles (Lily Ray, Kevin Indig, Ryan Law, Aleyda Solis, Glen Allsopp, Matt Diggity) were targeted via Apify but returned 404 authentication errors — LinkedIn's API restricts activity feeds to authenticated sessions only. These profiles are documented in research/linkedin-posts/ with clear notes on the API limitation and pointers to YouTube transcript data available for these same experts as alternative high-signal sources.
+
+**Research & Reference Materials:** research/other/ contains Google's scaled-content-abuse policy and a curated list of key articles from the 10 experts. patterns.md includes cross-expert synthesis, areas of consensus, disagreements, and emerging opportunities.
+
+**Total Data Collected:** 16 YouTube transcripts + 60 LinkedIn posts + policy + patterns + synthesis = comprehensive research dataset for an AI-SEO content production playbook.
+
+**Commit History:** 40+ commits documenting 3 days of work — from expert validation through data collection to analysis.
+
+---
+
 ## Data Collection Progress
 
 - [x] Day 1: Scaffold repo, lock sources, create script templates
