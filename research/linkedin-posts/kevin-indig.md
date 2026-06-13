@@ -1,0 +1,11 @@
+# LinkedIn Posts — Kevin Indig
+**Profile:** https://www.linkedin.com/in/kevin-indig/
+**Posts fetched:** 0
+
+---
+
+> **Note:** No posts retrieved. Actor error: No valid target provided — LinkedIn activity not publicly accessible via API.
+>
+> Actors tried: harvestapi/linkedin-profile-posts, supreme_coder/linkedin-post
+>
+> To scrape these profiles, LinkedIn authentication (cookies) would be required.
