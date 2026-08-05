@@ -2,7 +2,9 @@
 
 A research project collecting and synthesizing content from 10 practitioners who actively produce SEO content using AI tools, with documented workflows, published experiments, or proprietary tools.
 
-**Status:** Data collection in progress (June 2026)
+**Status:** Research complete (June 2026) · Playbook complete (August 2026)
+
+**→ Read the playbook: [PLAYBOOK.md](./PLAYBOOK.md)**
 
 ---
 
@@ -61,6 +63,7 @@ The eventual goal is to use this research foundation to build a playbook on:
 /data/
   /raw/                   — Raw JSON output from API calls (in .gitignore)
 /patterns.md              — Cross-expert patterns, tensions, and synthesis
+PLAYBOOK.md               — The playbook built from this research
 README.md                 — This file
 .gitignore                — Excludes /data/raw/ and common files
 ```
@@ -99,16 +102,16 @@ README.md                 — This file
 
 **Total Data Collected:** 16 YouTube transcripts + 60 LinkedIn posts + policy + patterns + synthesis = comprehensive research dataset for an AI-SEO content production playbook.
 
-**Commit History:** 40+ commits documenting 3 days of work — from expert validation through data collection to analysis.
+**Commit History:** 47 commits documenting 3 days of work — from expert validation through data collection to analysis.
 
 ---
 
 ## Data Collection Progress
 
 - [x] Day 1: Scaffold repo, lock sources, create script templates
-- [ ] Day 2: Fetch YouTube transcripts (all 10 experts, 2–3 videos each)
-- [ ] Day 2: Fetch LinkedIn posts (all 10 experts, ~15 posts each)
-- [ ] Day 3: Synthesize patterns, write analysis, finalize README
+- [x] Day 2: Fetch YouTube transcripts (all 10 experts, 2–3 videos each)
+- [x] Day 2: Fetch LinkedIn posts (all 10 experts, ~15 posts each)
+- [x] Day 3: Synthesize patterns, write analysis, finalize README
 
 ---
 ## Channel Selection Rationale
